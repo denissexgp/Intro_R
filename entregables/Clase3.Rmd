@@ -1,0 +1,169 @@
+---
+title: 'Clase 3'
+author: "Denisse Garcia-Pacheco"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+toc-title: "Índice"
+always_allow_html: true
+
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 3
+    number_sections: true
+   
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+    theme: cosmo
+    df_print: paged
+editor_options:
+  markdown:
+    wrap: 72
+---
+# Clase 3
+## Ejercicio 1. Identificación de genes candidatos
+```{r}
+#Queremos explorar qué genes podrían estar relacionados con la respuesta bacteriana al estrés.
+
+#Utilizando dplyr:
+ library(readr)
+library(dplyr)
+
+datos <- read_csv(
+  "/Users/dxgarcia/Universidad/Semestre3/bioinformatica3/Intro_R/data_raw/expresion_genica_estres.csv",
+  show_col_types = FALSE
+)
+
+glimpse(datos)
+ 
+#Calcula el conteo promedio de cada gen en cada condición experimental.
+resumen11 <- datos %>%
+  group_by(gene_id, condicion) %>%
+  summarise(
+    promedio = mean(conteo)
+  )
+
+resumen11
+
+#Organiza los resultados de manera que puedas comparar los promedios de Control y Estrés para cada gen.
+
+comparar <- resumen11 %>%
+  group_by(gene_id) %>% 
+  arrange(desc(promedio))
+
+comparar
+
+
+#Calcula la razón entre el promedio en Estrés y el promedio en Control.
+
+razon_promedios <- datos %>%
+  group_by(gene_id, condicion, funcion) %>%
+  summarise(promedio = mean(conteo), .groups = "drop") %>%
+  tidyr::pivot_wider(names_from = condicion, values_from = promedio) %>%
+  mutate(razon_estres_control = Estres / Control)
+
+print(razon_promedios)
+
+
+#Identifica los cinco genes con mayor aumento relativo y muestra su anotación funcional.
+
+top5_genes <- razon_promedios %>%
+  slice_max(order_by = razon_estres_control, n = 5) 
+
+
+print(top5_genes)
+
+
+#Pregunta de interpretación: ¿Un gen con un aumento relativo grande necesariamente presenta un conteo alto de lecturas? Justifica tu respuesta.
+
+
+```
+
+
+## Ejercicio 2. ¿Qué funciones biológicas predominan?
+Queremos investigar cuáles son las funciones biológicas representadas entre los genes con mayores conteos de lecturas.
+
+Utilizando dplyr:
+
+Calcula el conteo promedio de cada gen considerando todas las muestras.
+Identifica los 15 genes con mayor conteo promedio.
+Determina cuántos de esos genes pertenecen a cada categoría funcional.
+Ordena las categorías funcionales de mayor a menor frecuencia.
+Pregunta de interpretación: ¿La categoría funcional más frecuente entre estos 15 genes necesariamente es la más importante para la bacteria? Explica.
+
+```{r}
+library(readr)
+library(dplyr)
+
+datos <- read_csv("/Users/dxgarcia/Universidad/Semestre3/bioinformatica3/Intro_R/data_raw/expresion_genica_estres.csv", show_col_types = FALSE)
+
+# 1. Calcular el conteo promedio de cada gen considerando todas las muestras
+# 2. Identificar los 15 genes con mayor conteo promedio
+# 3 y 4. Contar genes por categoría funcional y ordenar de mayor a menor frecuencia
+funciones_top15 <- datos %>%
+  group_by(gene_id, funcion) %>%
+  summarise(
+    conteo_promedio = mean(conteo),
+    .groups = "drop"
+  ) %>%
+  slice_max(order_by = conteo_promedio, n = 15, with_ties = FALSE) %>%
+  count(funcion, sort = TRUE, name = "cantidad_genes")
+
+funciones_top15
+```
+Pregunta de interpretación: ¿La categoría funcional más frecuente entre estos 15 genes necesariamente es la más importante para la bacteria? Explica.
+
+No. Que una categoría funcional sea la más frecuente entre los genes con mayor conteo promedio solo refleja una mayor abundancia de transcritos. 
+
+
+
+## tarea ¿Qué genes destacan dentro de cada muestra?
+
+En un experimento de expresión génica, algunos genes pueden presentar conteos considerablemente mayores que otros dentro de una misma muestra.
+
+Queremos identificar los genes cuyos conteos superan el promedio de su propia muestra.
+
+Utilizando dplyr:
+
+Calcula el conteo promedio de los genes en cada muestra.
+Agrega a la tabla original una columna llamada promedio_muestra que contenga ese promedio para cada observación, sin eliminar ninguna fila.
+Identifica los genes cuyo conteo sea al menos el doble del promedio de su muestra.
+Calcula cuántos genes cumplen esta condición en cada muestra y compara los resultados entre Control y Estrés.
+Pregunta de interpretación: ¿Por qué es más adecuado comparar cada gen con el promedio de su propia muestra en lugar de utilizar un único promedio calculado con todas las muestras?
+```{r}
+# 1 y 2. Agregar promedio por muestra sin eliminar ninguna fila
+datos_con_promedio <- datos %>%
+  group_by(sample_id) %>%
+  mutate(promedio_muestra = mean(conteo)) %>%
+  ungroup()
+
+# 3. Filtrar genes cuyo conteo sea al menos el doble del promedio de su muestra
+genes_destacados <- datos_con_promedio %>%
+  filter(conteo >= 2 * promedio_muestra)
+
+# 4. Contar cuántos genes cumplen la condición en cada muestra y comparar condiciones
+conteo_por_muestra <- datos_con_promedio %>%
+  group_by(sample_id, condicion) %>%
+  summarise(
+    genes_destacados = sum(conteo >= 2 * promedio_muestra),
+    .groups = "drop"
+  )
+
+conteo_por_muestra
+
+# Resumen comparativo entre Control y Estrés
+conteo_por_muestra %>%
+  group_by(condicion) %>%
+  summarise(
+    muestras = n(),
+    promedio_destacados = mean(genes_destacados),
+    total_destacados = sum(genes_destacados),
+    .groups = "drop"
+  )
+```
+**Pregunta de interpretación: ¿Por qué es más adecuado comparar cada gen con el promedio de su propia muestra en lugar de utilizar un único promedio calculado con todas las muestras?** Comparar cada gen contra el promedio de su propia muestra ajusta por diferencias en la profundidad de secuenciación (tamaño de librería) o cambios globales de expresión entre muestras
+
+
+

@@ -1,0 +1,329 @@
+---
+title: 'Clase 1'
+author: "Denisse Garcia-Pacheco"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+always_allow_html: true
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 3
+    number_sections: true
+   
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+    theme: cosmo
+    df_print: paged
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+
+# Ejercicios Clase 1 
+
+
+## Ejercicio 1   Vectores y selección Pregunta
+Crea los vectores `ids <- c("g1", "g2", "g3", "g4", "g5")` y `tam <- c(90, 450, 310, 120, 600)`.
+
+1.  Selecciona el tercer identificador.
+2.  Recupera los identificadores de genes con longitud de al menos 300.
+3.  Cuenta cuántos cumplen esa condición sin usar un ciclo.
+
+```{r}
+ids <- c("g1", "g2", "g3", "g4", "g5")
+tam <- c(90, 450, 310, 120, 600)
+
+tercer <- ids[3]
+cat("El tercer indentificador es:", tercer, "\n")
+
+longuitud300 <- ids[tam >= 300]
+cat("Los identificadores de genes con longitud de al menos 300 son :", longuitud300, "\n")
+
+cuantos_identificadores <- sum(tam >= 300)
+cat("cuántos cumplen que los identificadores de genes con longitud de al menos 300 son :", cuantos_identificadores, "\n")
+```
+## Ejercicio 2: Factores
+
+Crea una vector con las letras `A M A B M M B A B B`, donde `A` significa Alto, `B` bajo y `M` medio. Convierte las entradas del vector a factores y especifica que `A > M > B`.
+
+```{r}
+altura <- factor(c("A", "M", "A", "B", "M", "M", "B", "A", "B", "B"),
+            levels = c("A", "M", "B" ))
+levels(altura)
+```
+
+
+##  Ejercicio 3. Elegir estructuras
+
+1.  Construye un `data.frame` con tres genes, sus longitudes y una etiqueta funcional.
+2.  Recupera únicamente las filas con longitud mayor que 200.
+3.  Crea una lista que contenga la tabla y el identificador de una muestra.
+4.  Explica por qué una matriz de caracteres no sería una buena sustitución para la tabla cuando queremos conservar longitudes numéricas.
+
+```{r}
+tabla <- data.frame(
+  gen = c("g1", "g2", "g3"),
+  longitud = c(100, 350, 500),
+  funcion = c("hipotetica", "enzima", "transportador")
+)
+tabla[tabla$longitud > 200, ]
+resultado <- list(muestra = "M01", genes = tabla)
+resultado$genes
+```
+
+##  Ejercicio 1. Clasificación de un valor
+
+Define una variable `conteo` que represente el número de lecturas asignadas a un gen. Escribe un condicional que imprima:
+
+- `"Dato faltante"` si el valor es `NA`.
+- `"Conteo inválido"` si es negativo.
+- `"Sin lecturas"` si es cero.
+- `"Con lecturas"` si es positivo.
+
+Prueba tu código con `NA`, `-2`, `0` y `15`.
+
+```{r}
+conteo <- 15
+
+if (is.na(conteo)) {
+  print("Dato faltante")
+} else if (conteo < 0) {
+  print("Conteo inválido")
+} else if (conteo == 0) {
+  print("Sin lecturas")
+} else {
+  print("Con lecturas")
+}
+```
+
+##  Ejercicio 2. Verificación de conteos
+
+Considera el vector `conteos <- c(8, 0, 13, 5, 0, 21)`. Utiliza las funciones anteriores para:
+
+1.  Verificar si todos los valores son no negativos.
+2.  Determinar si existe al menos un conteo mayor que 20.
+3.  Obtener las posiciones de los conteos iguales a cero.
+4.  Crear un vector que indique `"Presente"` o `"Ausente"` según si el conteo es mayor que cero.
+```{r}
+conteos <- c(8, 0, 13, 5, 0, 21)
+
+all(conteos >= 0)
+any(conteos > 20)
+which(conteos == 0)
+ifelse(conteos > 0, "Presente", "Ausente")
+```
+##  Ejercicio 3. Longitudes de secuencias
+
+A partir del vector:
+
+```{r}
+secuencias <- c("ATG", "ATGCGT", "AATTCCGG", "CG")
+```
+
+1.  Utiliza un ciclo `for` para guardar las longitudes en un vector llamado `longitudes`.
+2.  Crea otro vector llamado `clasificacion` que contenga `"Corta"` para longitudes menores que 5 y `"Larga"` para longitudes de al menos 5.
+3.  Muestra ambos vectores.
+```{r}
+secuencias <- c("ATG", "ATGCGT", "AATTCCGG", "CG")
+longitudes <- numeric(length(secuencias))
+clasificacion <- character(length(secuencias))
+
+for (i in seq_along(secuencias)) {
+  longitudes[i] <- nchar(secuencias[i])
+
+  if (longitudes[i] < 5) {
+    clasificacion[i] <- "Corta"
+  } else {
+    clasificacion[i] <- "Larga"
+  }
+}
+
+longitudes
+clasificacion
+```
+
+##  Ejercicio 4. Alcanzar una longitud
+
+Imagina que estamos construyendo una secuencia mediante la adición de un nucleótido `"A"` en cada iteración. Escribe un ciclo `while` que comience con una cadena vacía y se detenga cuando la secuencia alcance **8 nucleótidos**. Muestra el resultado final.
+```{r}
+secuencia <- ""
+
+while (nchar(secuencia) < 8) {
+  secuencia <- paste0(secuencia, "A")
+}
+
+secuencia
+nchar(secuencia)
+```
+
+##  Ejercicio 1: Función 1
+
+Escribe una función llamada `empieza_con` que reciba una secuencia y un prefijo, y determine si la secuencia comienza con ese prefijo. Pruébala con `"ATGCGT"` y los prefijos `"ATG"` y `"TGA"`.
+
+```{r}
+empieza_con <- function(secuencia, prefijo){
+  startsWith(secuencia, prefijo)
+}
+
+empieza_con("ATGCGT", "ATG")
+```
+
+##  Ejercicio 2: Función 2
+
+Modifica `resumir_adn()` para que también devuelva la proporción de nucleótidos `G` y `C` respecto de la longitud total. Prueba la función con una secuencia no vacía.
+
+```{r}
+resumir_adn <- function(id, secuencia) {
+  secuencia <- toupper(secuencia)
+  bases <- strsplit(secuencia, split = "", fixed = TRUE)[[1]]
+
+  list(
+    id = id,
+    longitud = nchar(secuencia),
+    conteo_gc = sum(bases %in% c("G", "C"))
+  )
+}
+
+resultado <- resumir_adn("GEN_01", "ATGCGTAA")
+resultado
+```
+## 🧠 Ejercicio 3: Función 3
+
+Crea una función llamada `clasificar_secuencias` que reciba un vector de secuencias y devuelva una lista con dos elementos:
+
+- `validas`: las secuencias formadas únicamente por `A`, `C`, `G` y `T`.
+- `invalidas`: las secuencias que contienen otros caracteres o valores faltantes.
+
+Utiliza la función `revisar_secuencias()` del ejemplo anterior.
+
+```{r}
+clasificacion_secuencias <- function(secuencias) {
+  resultado <- logical(length(secuencias))
+  
+  for (i in seq_along(secuencias)) {
+    secuencia <- secuencias[i]
+    
+    if (is.na(secuencia)) {
+      resultado[i] <- FALSE
+    } else {
+      resultado[i] <- grepl("^[ACGT]+$", toupper(secuencia))
+    }
+  } 
+  
+  # Calculamos el conteo al finalizar el bucle
+  validas <- sum(resultado)
+  invalidas <- length(secuencias) - validas
+  
+  # Devolvemos tanto el vector booleano como el resumen en una lista
+  list(
+    vector_resultado = resultado,
+    validas = validas,
+    invalidas = invalidas
+  )
+}
+
+
+secuencias <- c("ATGCGT", "ACNTGA", "ttacga", NA)
+clasificacion_secuencias(secuencias)
+
+
+```
+## Ejercicio 4
+Un archivo de secuencias ha sido representado en R mediante dos vectores:
+```{r}
+ids <- c("seq_01", "seq_02", "seq_03", "seq_04")
+secuencias <- c("ATGCGT", "ACNTGA", "GGCCAA", "TTTAAA")
+```
+
+Escribe una función crear_reporte_secuencias(ids, secuencias) que:
+
+Compruebe que ambos argumentos son vectores de caracteres y tienen la misma longitud.
+Identifique las secuencias válidas mediante revisar_secuencias().
+Devuelva un data.frame con las columnas id, secuencia, longitud y valida.
+Asigne NA a la longitud de las secuencias inválidas.
+
+```{r}
+# Función
+revisar_secuencias <- function(secuencias) {
+  resultado <- logical(length(secuencias))
+
+  for (i in seq_along(secuencias)) {
+    secuencia <- secuencias[i]
+
+    if (is.na(secuencia)) {
+      resultado[i] <- FALSE
+    } else {
+      resultado[i] <- grepl("^[ACGT]+$", toupper(secuencia))
+    }
+  }
+
+  resultado
+}
+
+# Función solicitada en el Ejercicio 4
+crear_reporte_secuencias <- function(ids, secuencias) {
+  # 1. Comprobar que ambos argumentos son vectores de caracteres y tienen la misma longitud
+  if (!is.character(ids) || !is.character(secuencias)) {
+    stop("Los argumentos 'ids' y 'secuencias' deben ser vectores de caracteres.")
+  }
+
+  if (length(ids) != length(secuencias)) {
+    stop("Los vectores 'ids' y 'secuencias' deben tener la misma longitud.")
+  }
+
+  # 2. Identificar las secuencias válidas mediante revisar_secuencias()
+  valida <- revisar_secuencias(secuencias)
+
+  # 4. Calcular longitudes y asignar NA a las secuencias inválidas
+  longitud <- nchar(secuencias)
+  longitud[!valida] <- NA
+
+  # 3. Devolver un data.frame con las columnas id, secuencia, longitud y valida
+  data.frame(
+    id = ids,
+    secuencia = secuencias,
+    longitud = longitud,
+    valida = valida,
+    stringsAsFactors = FALSE
+  )
+}
+
+# Prueba
+ids <- c("seq_01", "seq_02", "seq_03", "seq_04")
+secuencias <- c("ATGCGT", "ACNTGA", "GGCCAA", "TTTAAA")
+
+crear_reporte_secuencias(ids, secuencias)
+  
+```
+
+## Ejercicio 1
+Considera el siguiente código, guardado en un archivo llamado revision.R:
+
+```{r}
+longitudes <- nchar(secuencias)
+resultado <- data.frame(id = ids, longitud = longitudes)
+print(resultado)
+```
+
+Un estudiante afirma que el archivo funciona porque obtuvo una tabla al ejecutarlo en su computadora.
+
+**Por qué podría fallar si otra persona abre el archivo y lo ejecuta desde una sesión nueva de R?**
+Por que el codigo solo sirve si ya tienes declarado secuencias y ids ya que los pasas como argumentos. Al ejecutarlo el estudiante obtubo una tabla ya que en su ambiente ya tenia los objetos. Por eso al ejecuarlo desde una sesion de R que su ambiente este vacio va a fallar. 
+
+**¿Cómo se puede modificar el script para que pueda ejecutarse completo sin depender de objetos creados previamente en la consola?**
+Se tiene que poner que contiene secuencias y ids en el mismo script
+
+
+
+
+
+
+
+
+
+
+
+
