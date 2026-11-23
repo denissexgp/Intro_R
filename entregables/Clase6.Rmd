@@ -1,0 +1,26 @@
+---
+title: 'Clase 6'
+author: "Denisse Garcia-Pacheco"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+always_allow_html: true
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 3
+    number_sections: true
+   
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+    theme: cosmo
+    df_print: paged
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+
+
+

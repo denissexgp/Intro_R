@@ -1,0 +1,120 @@
+---
+title: "Composición microbiana de la rizosfera"
+author: "Nombre del estudiante"
+date: today
+lang: es
+format:
+  html:
+    toc: true
+    code-fold: true
+execute:
+  warning: false
+  message: false
+---
+
+# Introducción
+
+Este reporte analiza la **composición taxonómica** de muestras de rizosfera.
+
+## Pregunta de investigación
+
+¿Observamos diferencias entre las *plantas hospederas*?
+
+- Primer objetivo.
+- Segundo objetivo.
+
+[Documentación de Quarto](https://quarto.org/docs/)
+
+```{r}
+
+#| eval: false
+#| label: fig-ejemplo
+#| fig-cap: "Ejemplo de una figura generada desde R"
+
+plot(1:5, (1:5)^2, pch = 19)
+```
+
+
+```{r}
+#| label: setup
+#| include: true
+#| message: false
+#| warning: false
+
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(paletteer)
+library(kableExtra)
+
+metadata_riz <- read_csv("/Users/dxgarcia/Universidad/Semestre3/bioinformatica3/Intro_R/data_raw/datos_sesion_04_integracion/datos_rizosfera/metadata_rizosfera.csv")
+
+totales_muestra <- read_tsv("results/totales_muestra.tsv")
+generos_5 <- read_tsv("results/generos_5.tsv")
+filos_5 <- read_tsv("results/filos_5.tsv")
+
+
+```
+
+```{r}
+#| label: tbl-muestras-r
+
+resumen_hospederos <- metadata_riz %>%
+  count(host_name, name = "numero_muestras") %>%
+  arrange(desc(numero_muestras))
+
+knitr::kable(
+  resumen_hospederos,
+  col.names = c("Planta hospedera", "Número de muestras"),
+  caption = "Número de muestras por planta hospedera"
+)
+```
+
+```{r}
+#| label: tbl-hospederos-notas
+#| tbl-cap: "Distribución de muestras por planta hospedera"
+
+resumen_hospederos %>%
+  knitr::kable(
+    col.names = c("Planta hospedera", "Número de muestras"),
+    align = c("l", "c")
+  ) %>%
+  kableExtra::kable_styling(
+    full_width = FALSE,
+    position = "center"
+  ) %>%
+  kableExtra::footnote(
+    general = "Los conteos corresponden a las muestras disponibles en los metadatos.",
+    alphabet = c(
+      "La cantidad de muestras no necesariamente es igual entre plantas.",
+      "Las muestras pueden proceder de diferentes estudios."
+    ),
+    general_title = "Nota: "
+  )
+```
+
+
+```{r}
+#| label: fig-profundidad
+#| fig-cap: "Total de lecturas por muestra, según planta hospedera"
+#| fig-width: 10
+#| fig-height: 5
+
+profundidad <- totales_muestra %>%
+  left_join(
+    metadata_riz %>% select(sample_id, host_name),
+    by = "sample_id"
+  )
+
+ggplot(profundidad, aes(x = host_name, y = total_lecturas)) +
+  geom_boxplot(fill = "blue", alpha = 0.8) +
+  coord_flip() +
+  labs(
+    x = "Planta hospedera",
+    y = "Total de lecturas",
+    title = "Profundidad de lectura por planta"
+  ) +
+  theme_minimal()
+```
+

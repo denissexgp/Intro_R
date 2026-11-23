@@ -1,0 +1,171 @@
+---
+title: 'Clase 5'
+author: "Denisse Garcia-Pacheco"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+always_allow_html: true
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 3
+    number_sections: true
+   
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+    theme: cosmo
+    df_print: paged
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+# Construcción y exploración visual de datos bioinformáticos con ggplot2
+
+## Ejercicio 1:
+Utilizando generos_5 y metadata_riz:
+
+Identifica las plantas hospederas que tienen al menos 5 muestras.
+Conserva únicamente las muestras correspondientes a esas plantas.
+Construye una gráfica de barras apiladas de abundancia relativa por género con ggplot2, utilizando facet_wrap() para comparar las plantas hospederas.
+Personaliza la figura con una paleta de colores adecuada, etiquetas legibles y la categoría "Géneros < 5%" al final de la leyenda.
+
+Para discutir: ¿Qué diferencias observas en la composición taxonómica entre las plantas? ¿Todas las muestras de una misma planta presentan composiciones similares?
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(paletteer)
+
+# 1. Identificar las plantas hospederas con al menos 5 muestras en metadata_riz
+hospederos_5_muestras <- metadata_riz %>%
+  count(host_name, name = "n_muestras") %>%
+  filter(n_muestras >= 5) %>%
+  pull(host_name)
+
+# 2. Filtrar generos_5 para conservar únicamente esas plantas hospederas
+generos_filtrados <- generos_5 %>%
+  filter(host_name %in% hospederos_5_muestras)
+
+# 3. Ordenar los géneros alfabéticamente dejando "Géneros < 5%" al final
+orden_generos <- c(
+  sort(setdiff(unique(generos_filtrados$taxon_final), "Géneros < 5%")),
+  "Géneros < 5%"
+)
+
+# Convertir taxon_final en factor con el orden deseado (ayuda tanto al apilado como a la leyenda)
+generos_filtrados <- generos_filtrados %>%
+  mutate(taxon_final = factor(taxon_final, levels = orden_generos))
+
+# Definir paleta de colores accesible (ajustada dinámicamente al número de géneros)
+n_generos <- length(orden_generos)
+colores_generos <- c(
+  as.character(paletteer::paletteer_d("ggthemes::Tableau_20"))[1:(n_generos - 1)],
+  "lightblue" # Gris neutro para "Géneros < 5%"
+)
+
+# 4. Construir la gráfica de barras apiladas con facet_wrap()
+p_ej1 <- ggplot(
+  generos_filtrados,
+  aes(x = sample_id, y = abundancia_relativa, fill = taxon_final)
+) +
+  geom_col(width = 0.85) +
+  scale_fill_manual(values = colores_generos, breaks = orden_generos) +
+  scale_y_continuous(labels = function(x) paste0(round(100 * x), "%")) +
+  facet_wrap(~ host_name, scales = "free_x") +
+  labs(
+    title = "Composición taxonómica por género según planta hospedera",
+    subtitle = "Plantas con al menos 5 muestras; umbral de abundancia por muestra: 5 %",
+    x = "Muestra",
+    y = "Abundancia relativa",
+    fill = "Género",
+    caption = "Comparación descriptiva; muestras provenientes de diferentes estudios"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    strip.text = element_text(face = "bold", size = 11),
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 6),
+    legend.position = "bottom",
+    panel.grid.major.x = element_blank()
+  )
+
+p_ej1
+
+```
+
+
+#  Ejercicio 2:
+
+Utilizando filos_5 y metadata_riz:
+
+Identifica los países que tienen al menos 5 muestras.
+Conserva únicamente las muestras correspondientes a esos países.
+Construye una gráfica de barras apiladas de abundancia relativa por filo con ggplot2, utilizando facet_wrap() para comparar los países.
+Para discutir: ¿Qué diferencias observas en la composición taxonómica entre los países? ¿Las muestras de un mismo país presentan composiciones similares?
+
+```{r}
+# 1. Identificar los países con al menos 5 muestras
+paises_5_muestras <- metadata_riz %>%
+  count(country, name = "n_muestras") %>%
+  filter(n_muestras >= 5) %>%
+  pull(country)
+
+# 2. Unir país desde metadata_riz y conservar únicamente esos países
+filos_filtrados_pais <- filos_5 %>%
+  left_join(
+    metadata_riz %>% select(sample_id, country),
+    by = "sample_id",
+    relationship = "many-to-one"
+  ) %>%
+  filter(country %in% paises_5_muestras)
+
+# 3. Ordenar los filos dejando "Filos < 5%" al final
+orden_filos <- c(
+  sort(setdiff(unique(filos_filtrados_pais$taxon_final), "Filos < 5%")),
+  "Filos < 5%"
+)
+
+filos_filtrados_pais <- filos_filtrados_pais %>%
+  mutate(taxon_final = factor(taxon_final, levels = orden_filos))
+
+# Paleta accesible para filos (7 colores + gris para "Filos < 5%")
+n_filos <- length(orden_filos)
+colores_filos <- c(
+  as.character(paletteer::paletteer_d("colorBlindness::Blue2Orange8Steps"))[1:(n_filos - 1)],
+  "#999999"
+)
+
+# 4. Construir la gráfica de barras apiladas comparando países
+p_ej2 <- ggplot(
+  filos_filtrados_pais,
+  aes(x = sample_id, y = abundancia_relativa, fill = taxon_final)
+) +
+  geom_col(width = 0.85) +
+  scale_fill_manual(values = colores_filos, breaks = orden_filos) +
+  scale_y_continuous(labels = function(x) paste0(round(100 * x), "%")) +
+  facet_wrap(~ country, scales = "free_x") +
+  labs(
+    title = "Composición taxonómica por filo según país",
+    subtitle = "Países con al menos 5 muestras; umbral de abundancia por muestra: 5 %",
+    x = "Muestra",
+    y = "Abundancia relativa",
+    fill = "Filo",
+    caption = "Comparación descriptiva; muestras de diferentes estudios y plantas hospederas"
+  ) +
+  theme_minimal(base_size = 11) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    strip.text = element_text(face = "bold", size = 11),
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 6),
+    legend.position = "bottom",
+    panel.grid.major.x = element_blank()
+  )
+
+p_ej2
+
+```
+
+
+
