@@ -103,7 +103,7 @@ knitr::kable(tabla_abundancia,
 
 Calcula la abundancia relativa promedio de cada género considerando las 17 muestras, incluidos los conteos cero. Selecciona los diez con mayor promedio y reproduce la gráfica de barras horizontales ordenadas de mayor a menor. Muestra el eje de abundancia en porcentajes y agrega etiquetas apropiadas.
 
-![Figura 1. Referencia.](figures/figura_1_A.png)
+
 
 ```{r}
 top10_generos <- abundancia %>%
@@ -201,7 +201,7 @@ ggplot(fig2_df, aes(x = sample_id, y = abundancia_rel, fill = categoria_genero))
 
 ```
 
-![Figura 2. Referencia.](figures/figura_2_A.png)
+
 
 ## Interpretación (5 puntos)
 
